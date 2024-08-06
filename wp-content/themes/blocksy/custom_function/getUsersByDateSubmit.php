@@ -7,7 +7,7 @@ function handle_get_users_by_date_submit() {
     $table_certificate = $wpdb->prefix . 'certificate';
 
     $query = $wpdb->prepare(
-        "SELECT @rownum := @rownum + 1 AS rownum, u.ID, u.Name, u.Phone, u.Email, u.CertificateId, u.isCertified, u.isDeleted, u.submittedAt, a.Name as certificate_name
+        "SELECT @rownum := @rownum + 1 AS rownum, u.Id, u.Name, u.Phone, u.Email, u.CertificateId, u.isCertified, u.isDeleted, u.submittedAt, a.Name as certificate_name
         FROM $table_user u
         INNER JOIN $table_certificate a ON u.CertificateId = a.Id
         CROSS JOIN (SELECT @rownum := 0) r

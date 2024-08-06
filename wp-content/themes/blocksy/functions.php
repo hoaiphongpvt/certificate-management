@@ -22,6 +22,7 @@ require_once get_template_directory() . "/custom_function/getCertificate.php";
 require_once get_template_directory() . "/custom_function/saveCertificate.php";
 require_once get_template_directory() . "/custom_function/watchCertificated.php";
 require_once get_template_directory() . "/custom_function/deleteUser.php";
+require_once get_template_directory() . "/custom_function/restoreUser.php";
 require_once get_template_directory() . "/custom_function/cancelCertificate.php";
 require_once get_template_directory() . "/custom_function/importIdCertificated.php";
 require_once get_template_directory() . "/custom_function/deleteCertificate.php";
@@ -31,6 +32,7 @@ require_once get_template_directory() . "/custom_function/getUsersByName.php";
 require_once get_template_directory() . "/custom_function/getUsersByCertificate.php";
 require_once get_template_directory() . "/custom_function/getUsersByDate.php";
 require_once get_template_directory() . "/custom_function/getUsersByDateSubmit.php";
+require_once get_template_directory() . "/custom_function/getListUsers.php";
 
 
 require get_template_directory() . '/inc/init.php';

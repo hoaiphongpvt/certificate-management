@@ -20,7 +20,7 @@ function my_custom_certificate_management_page_html() {
     ?>
     <div class="wrap">
         <h1>Quản lý Chứng chỉ</h1>
-        <button id="add" style="color: #fff; background-color: #007bff; border: none; padding: 6px 12px; cursor: pointer; border-radius: .25rem; margin-bottom: 8px">Thêm chứng chỉ</button>
+        <button id="add" style="color: #fff; background-color: #007bff; border: none; padding: 6px 12px;margin-top: 15px; cursor: pointer; border-radius: .25rem; margin-bottom: 8px">Thêm chứng chỉ</button>
         <table class="wp-list-table widefat fixed striped users">
             <thead>
                 <tr>
@@ -52,7 +52,10 @@ function my_custom_certificate_management_page_html() {
             <div>
                 <h2>Tên chứng chỉ: <input id="certificateName"/></h2>
                 <h2>Nội dung chứng chỉ</h2>
-                <textarea id="certificateContentUpdate" style="width: 80%; height: 500px"></textarea>
+                <div style="display: flex; gap: 10px; align-items: center">
+                    <textarea id="certificateContentUpdate" style="width: 60%; height: 500px"></textarea>
+                    <div id="reviewTemplateUpdate" style="width: 40%; height: 500px;"></div>
+                </div>  
             </div>
             <button style="color: #212529; background-color: #f8f9fa; padding: 6px 12px; border: none; cursor: pointer; border-radius: .25rem" id="closePopupUpdate">Đóng</button>
             <button style="color: #fff; background-color: #007bff; border: none; padding: 6px 12px; cursor: pointer; border-radius: .25rem; margin-left: 6px" id="updateCertificate">Cập nhật</button>
@@ -66,13 +69,18 @@ function my_custom_certificate_management_page_html() {
                     <option value="pasteContent">Dán nội dung</option>
                     <option value="uploadFile">Tải file</option>
                 </select>
-                <div id="pasteContent" style="display: none">
-                    <h2>Nội dung chứng chỉ (Dán nội dung chứng chỉ vào ô bên dưới)</h2>
-                    <textarea id="certificateContentAdd" style="width: 80%; height: 500px"></textarea>
-                </div>
-                <div id="uploadFile" style="display: none">
-                    <label>Tải file (Yêu cầu phải có biến {name} và {date} trong file)</label>
-                    <input type="file" id="fileTemplate" accept=".svg">
+                <div style="display: flex; gap: 10px">
+                    <div style="width: 60%">
+                        <div id="pasteContent" style="display: none">
+                            <h2>Nội dung chứng chỉ (Dán nội dung chứng chỉ vào ô bên dưới)</h2>
+                            <textarea id="certificateContentAdd" style="width: 100%; height: 500px"></textarea>
+                        </div>
+                        <div id="uploadFile" style="display: none">
+                            <label>Tải file (Yêu cầu phải có biến {name} và {date} trong file)</label>
+                            <input type="file" id="fileTemplate" accept=".svg">
+                        </div>
+                    </div>
+                    <div id="reviewTemplateAdd" style="width: 40%; padding-top: 50px; display: none"></div>
                 </div>
             </div>
             <button style="color: #212529; background-color: #f8f9fa; padding: 6px 12px; border: none; cursor: pointer; border-radius: .25rem" id="closePopupAdd">Đóng</button>
@@ -118,12 +126,28 @@ function my_custom_certificate_management_page_html() {
                         success: function(response) {
                             $('#certificateName').val(response.data.Name)
                             $('#certificateContentUpdate').val(response.data.TemplateSVG);
+                            $('#reviewTemplateUpdate').html($('#certificateContentUpdate').val());
                             $('#certificationPopupUpdate').css('display', 'block');
                         },
                         error: function() {
                             alert('Có lỗi xảy ra khi cập nhật chứng chỉ.');
                         }
                     });
+                }
+            })
+
+            $('#certificateContentUpdate').on('input', function() {
+                $('#reviewTemplateUpdate').html($(this).val());
+            })
+
+            $('#fileTemplate').change(function() {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                       $('#reviewTemplateAdd').html(e.target.result)
+                    };
+                    reader.readAsText(file); // Hoặc readAsDataURL(file) nếu cần đọc như URL dữ liệu
                 }
             })
 
@@ -160,6 +184,10 @@ function my_custom_certificate_management_page_html() {
                 $('#certificationPopupAdd').css('display', 'block');
             })
 
+            $('#certificateContentAdd').on('input', function() {
+                $('#reviewTemplateAdd').html($(this).val())
+            })
+
             $('#addCertificate').click(function() {
                 // Lấy giá trị từ textarea và input
                 const certificateName = $('#certificateNameAdd').val();
@@ -177,20 +205,15 @@ function my_custom_certificate_management_page_html() {
                         alert('Vui lòng nhập nội dung!')
                         return
                     }
-
                     saveCertificate(certificateName, textareaValue)
-                    
                 }
 
                 if (type === 'uploadFile') {
                     const fileTemplate = fileInput.files[0]
                     const reader = new FileReader();
-                    let svgContent = ''
                     reader.onload = function(e) {
-                        const svgContent = e.target.result;
-                        saveCertificate(certificateName, svgContent)
+                        saveCertificate(certificateName, e.target.result)
                     };
-                    
                     reader.readAsText(fileTemplate);
                 }
 
@@ -225,22 +248,25 @@ function my_custom_certificate_management_page_html() {
                 if (type === "pasteContent") {
                     $("#pasteContent").css('display', 'block')
                     $("#uploadFile").css('display', 'none')
+                    $('#reviewTemplateAdd').css('display', 'block')
                 } else if (type === "uploadFile") {
                     $("#uploadFile").css('display', 'block')
                     $("#pasteContent").css('display', 'none')
+                    $('#reviewTemplateAdd').css('display', 'block')
                 } else {
                     $("#pasteContent").css('display', 'none')
                     $("#uploadFile").css('display', 'none')
+                    $('#reviewTemplateAdd').css('display', 'none')
                 }
 
             })
 
             $('#closePopupUpdate').click(function() {
-                    $('#certificationPopupUpdate').css('display', 'none');
+                $('#certificationPopupUpdate').css('display', 'none');
             });
 
             $('#closePopupAdd').click(function() {
-                    $('#certificationPopupAdd').css('display', 'none');
+                $('#certificationPopupAdd').css('display', 'none');
             });
         })
     </script>

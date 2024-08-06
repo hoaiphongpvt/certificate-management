@@ -26,23 +26,23 @@ function my_custom_certificate_management_page() {
 }
 
 // Thêm menu trang tra cứu thông tin vào Admin Dashboard
-function my_custom_search_management_page() {
-    add_menu_page(
-        'TRA CỨU',   
-        'Tra cứu',  
-        'manage_options',
-        'custom-search-management',
-        'my_custom_search_management_page_html',
-        'dashicons-search',
-        8
-    );
-}
+// function my_custom_search_management_page() {
+//     add_menu_page(
+//         'TRA CỨU',   
+//         'Tra cứu',  
+//         'manage_options',
+//         'custom-search-management',
+//         'my_custom_search_management_page_html',
+//         'dashicons-search',
+//         8
+//     );
+// }
 
 // Đăng ký các trang quản lý với WordPress
 function my_register_custom_menus() {
     my_custom_user_management_page();
     my_custom_certificate_management_page();
-    my_custom_search_management_page();
+    //my_custom_search_management_page();
 }
 add_action('admin_menu', 'my_register_custom_menus');
 

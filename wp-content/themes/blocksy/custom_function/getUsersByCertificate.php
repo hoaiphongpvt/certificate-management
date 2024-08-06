@@ -8,7 +8,7 @@ function handle_get_users_by_certificate() {
     $table_certificate = $wpdb->prefix . 'certificate';
 
     $query = $wpdb->prepare(
-        "SELECT @rownum := @rownum + 1 AS rownum, u.ID, u.Name, u.Phone, u.Email, u.CertificateId, u.isCertified, u.isDeleted, u.submittedAt, c.Name as certificate_name
+        "SELECT @rownum := @rownum + 1 AS rownum, u.Id, u.Name, u.Phone, u.Email, u.CertificateId, u.isCertified, u.isDeleted, u.submittedAt, c.Name as certificate_name
         FROM $table_user u
         CROSS JOIN (SELECT @rownum := 0) r
         LEFT JOIN $table_certificate c ON u.CertificateId = c.ID

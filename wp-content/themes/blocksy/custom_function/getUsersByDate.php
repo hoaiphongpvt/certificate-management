@@ -8,7 +8,7 @@ function handle_get_users_by_date() {
     $table_certificate = $wpdb->prefix . 'certificate';
 
     $query = $wpdb->prepare(
-        "SELECT @rownum := @rownum + 1 AS rownum, u.ID, u.Name, u.Phone, u.Email, u.CertificateId, u.isCertified, u.isDeleted, u.submittedAt, a.Name as certificate_name, c.createdAt as createdAt
+        "SELECT @rownum := @rownum + 1 AS rownum, u.Id, u.Name, u.Phone, u.Email, u.CertificateId, u.isCertified, u.isDeleted, u.submittedAt, a.Name as certificate_name, c.createdAt as createdAt
         FROM $table_user u
         INNER JOIN $table_certificated c ON u.Id = c.userId
         INNER JOIN $table_certificate a ON u.CertificateId = a.Id
