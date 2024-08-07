@@ -2,7 +2,7 @@
 
 function handle_save_certificate() {
     // Lấy dữ liệu từ yêu cầu AJAX
-    $templateSVG = isset($_POST['certificate']) ? wp_kses_post(stripslashes($_POST['certificate'])) : '';
+    $templateSVG = isset($_POST['certificate']) ? stripslashes($_POST['certificate']) : '';
     $userId = isset($_POST['userId']) ? intval($_POST['userId']) : 0;
 
     // Kiểm tra dữ liệu

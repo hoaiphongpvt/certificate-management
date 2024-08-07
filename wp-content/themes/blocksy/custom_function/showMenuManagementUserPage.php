@@ -10,11 +10,11 @@ function my_custom_user_management_page_html() {
     <div class="wrap">
         <h1>Quản lý người dùng</h1>
         <div style="margin: 20px 0;">
-            <div style="display: flex; align-items: center; gap: 50px">
-                <div style="display: flex; align-items: center; gap: 12px">
+            <div class="d-flex" style="gap: 50px">
+                <div class="d-flex" style="gap: 12px">
                     <label style="font-size: 18px">Tìm kiếm người dùng:</label>
                     <input style="width: 300px" type="text" id="txtUsername" placeholder="Nhập tên người dùng...">
-                    <button style="color: #fff; background-color: #007bff; border: none; padding: 6px 12px; cursor: pointer; border-radius: .25rem;" id="search">Tìm</button>
+                    <button class="btnSearch" id="search">Tìm</button>
                 </div>
                 <div style="display: flex; align-items: center; gap: 12px">
                     <label style="font-size: 18px">Lọc người dùng:</label>
@@ -37,7 +37,7 @@ function my_custom_user_management_page_html() {
                             <option value="3">Thành viên</option>
                         </select>
                     </div>
-                    <button id="btnFilter" style="color: #fff; background-color: #007bff; border: none; padding: 6px 12px; cursor: pointer; border-radius: .25rem;">Lọc</button>
+                    <button id="btnFilter" class="btnFilter">Lọc</button>
                 </div>
             </div>
         </div>
@@ -50,11 +50,17 @@ function my_custom_user_management_page_html() {
         <div id="certificationPopup" style="display:none;">
             <h2>Thông tin chứng chỉ</h2>
             <div id="certificateContent" style="width: 50%"></div>
-            <button style="color: #212529; background-color: #f8f9fa; padding: 6px 12px; border: none; cursor: pointer; border-radius: .25rem" id="closePopup">Đóng</button>
-            <button style="color: #fff; background-color: #007bff; border: none; padding: 6px 12px; cursor: pointer; border-radius: .25rem; margin-left: 6px" id="saveCertificate">Lưu</button>
+            <button class="btnClose" id="closePopup">Đóng</button>
+            <button class="btnSave" id="saveCertificate">Lưu</button>
         </div>
 
         <style>
+
+            .d-flex {
+                display: flex; 
+                align-items: center;
+            }
+
             #loading-container {
                 width: 100%;
                 height: 70vh;
@@ -73,35 +79,92 @@ function my_custom_user_management_page_html() {
                 width: 123px;
                 height: 30px
             }
+
+            .btnClose {
+                color: #212529; 
+                background-color: #f8f9fa; 
+                padding: 6px 12px; 
+                border: none; 
+                cursor: pointer; 
+                border-radius: .25rem
+            }
+
+            .btnSave {
+                color: #fff; 
+                background-color: #007bff; 
+                border: none; 
+                padding: 6px 12px; 
+                cursor: pointer; 
+                border-radius: .25rem; 
+                margin-left: 6px
+            }
+
+            .btnFilter, .btnSearch {
+                color: #fff; 
+                background-color: #007bff; 
+                border: none; 
+                padding: 6px 12px; 
+                cursor: pointer; 
+                border-radius: .25rem;
+            }
+
+            select {
+                width: 130px;
+            }
+
+            #pagination {
+                margin-top: 14px;
+                text-align: center;
+            }
+
+            #pagination button {
+                margin: 0 5px;
+            }
+
+            .page-btn {
+                padding: 10px;
+                margin: 2px;
+                border: 1px solid #ccc;
+                background-color: #fff;
+                cursor: pointer;
+                border-radius: 4px;
+            }
+
+            .page-btn.active {
+                background-color: #007bff;
+                color: #fff;
+                border-color: #007bff;
+            }
         </style>
 
         <script>
             jQuery(document).ready(function($) {
-
-                let currentPage = 1;
-                const perPage = 5;
-
                 window.onload = function() {
-                   getListUsers(currentPage);
+                   getListUsers();
                 };
 
-                function getListUsers(page) {
+                const listFunctions = {
+                    'getListUsers': getListUsers,
+                    'getListUsersByName': getListUsersByName,
+                    'getListUsersByCertificate': getListUsersByCertificate,
+                    'getListUsersByDateSubmit': getListUsersByDateSubmit,
+                    'getListUsersByDateCertified': getListUsersByDateCertified,
+                }
+
+                function getListUsers(ref, page = 1) {
                     showLoading()
                     $.ajax({
                         url: ajaxurl, 
-                        type: 'GET',
+                        type: 'POST',
                         data: {
                             action: 'get_list_users', 
-                            paged: page,
-                            per_page: perPage
+                            page: page,
                         },
                         success: function(response) {
                             const users = response.data.users;
-                            const totalUsers = response.data.total_users;
-                            const per_page = response.data.per_page;
-                            const totalPages = Math.ceil(totalUsers / perPage);
+                            const totalPages = response.data.total_pages;
                             if (users.length !== 0) {
-                                showResult(users)
+                                showResult(users, page, totalPages, "getListUsers", 'list')
                             }
                         },
                         error: function() {
@@ -113,59 +176,25 @@ function my_custom_user_management_page_html() {
                     });
                 }
 
-                function showResult(users) {
-                    let tableHtml = '<table class="wp-list-table widefat fixed striped users" style="margin-top: 10px"><tr><th>STT</th><th>Họ tên</th><th>Email</th><th>SĐT</th><th>Chứng chỉ</th><th>Ngày gửi</th><th>Trạng thái</th><th>Hoạt động</th><th>Hành động</th></tr>';
-                    users.forEach((user, index) => {
-                        //const stt = (currentPage - 1) * perPage + index + 1; // Calculate STT
-                        tableHtml += `<tr>
-                                        <td>${index + 1}</td>
-                                        <td>${user.Name}</td>
-                                        <td>${user.Email}</td>
-                                        <td>${user.Phone}</td>
-                                        <td>${user.certificate_name}</td>
-                                        <td>${formatDate(user.submittedAt)}</td>
-                                        <td>${user.isCertified === "0" ? "Chưa cấp" : "Đã cấp"}</td>
-                                        <td>${user.isDeleted === "0" ? "Đang hoạt động" : "Đã xóa"}</td>
-                                        <td>
-                                            ${user.isDeleted === "0" ? `
-                                                <select name="action" class="user-action" data-id="${user.CertificateId}" data-user_id="${user.Id}" data-user_name="${user.Name}">
-                                                    <option>Tùy chọn</option>
-                                                    <option value="delete">Xóa</option>
-                                                    ${user.isCertified !== "0" ? `<option value="cancelCertificate">Hủy chứng chỉ</option>` : `<option value="certification">Cấp chứng chỉ</option>`}
-                                                </select>` : 
-                                                `<button id="restore" data-user_id="${user.Id}">Khôi phục</button>`
-                                            }
-                                        </td>
-                                    </tr>`;
-                    });
-
-                    tableHtml += '</table>';
-                    $('#result').html(tableHtml);
-                }
-            
-
-                //Tra cứu thông tin
-                $('#search').click(function() {
-                    const name = $('#txtUsername').val()
-                    if (!name) {
-                        alert('Vui lòng nhập tên người dùng!')
-                        return
-                    }
+                function getListUsersByName(name, page = 1) {
                     showLoading()
                     $.ajax({
                         url: ajaxurl,
                         type: 'POST',
                         data: {
                             action: 'get_users_by_name',
-                            name
+                            name,
+                            page
                         },
                         success: function(response) {
                             $('#txtUsername').val('')
-                            const users = response.data;
+                            const users = response.data.users;
+                            const totalPages = response.data.total_pages;
                             if (users.length !== 0) {
-                                showResult(users)
+                                showResult(users, page, totalPages, "getListUsersByName", name)
                             } else {
                                 $('#result').html('<p>Không tồn tại người dùng với tên này</p>');
+                                $('#pagination').html('')
                             }
                         },
                         error: function() {
@@ -175,6 +204,166 @@ function my_custom_user_management_page_html() {
                             hideLoading()
                         }
                     });
+                }
+
+                function getListUsersByCertificate(id, page = 1) {
+                    showLoading()
+                    $.ajax({
+                        url: ajaxurl,
+                        type: 'POST',
+                        data: {
+                            action: 'get_users_by_certificate',
+                            idCertificate: id,
+                            page
+                        },
+                        success: function(response) {
+                            const users = response.data.users;
+                            const totalPages = response.data.total_pages;
+                            if (users.length !== 0) {
+                                showResult(users, page, totalPages, "getListUsersByCertificate", id)
+                            } else {
+                                $('#result').html('<p>Không tồn tại người dùng với chứng chỉ này</p>');
+                                $('#pagination').html('')
+                            }
+                        },
+                        error: function() {
+                            alert('Có lỗi xảy ra khi lấy danh sách người dùng.');
+                        },
+                        complete: function() {
+                            hideLoading()
+                        }
+                    });
+                }
+
+                function getListUsersByDateSubmit(date, page = 1) {
+                    showLoading()
+                        $.ajax({
+                        url: ajaxurl,
+                        type: 'POST',
+                        data: {
+                            action: 'get_users_by_date_submit',
+                            date: date,
+                            page
+                        },
+                        success: function(response) {
+                            const users = response.data.users;
+                            const totalPages = response.data.total_pages;
+                            if (users.length !== 0) {
+                                showResult(users, page, totalPages, "getListUsersByDateSubmit", date)
+                            } else {
+                                $('#result').html('<p>Không có người dùng nộp yêu cầu trong ngày này.</p>');
+                                $('#pagination').html('')
+                            }
+
+                        },
+                        error: function() {
+                            alert('Có lỗi xảy ra khi lấy danh sách người dùng.');
+                        },
+                        complete: function() {
+                            hideLoading()
+                        }
+                    });
+                }
+
+                function getListUsersByDateCertified(date, page = 1) {
+                    showLoading()
+                    $.ajax({
+                        url: ajaxurl,
+                        type: 'POST',
+                        data: {
+                            action: 'get_users_by_date',
+                            date: date,
+                            page
+                        },
+                        success: function(response) {
+                            const users = response.data.users;
+                            const totalPages = response.data.total_pages;
+                            if (users.length !== 0) {
+                                showResult(users, page, totalPages, "getListUsersByDateCertified", date)
+                            } else {
+                                $('#result').html('<p>Không có người dùng được cấp chứng chỉ trong ngày này.</p>');
+                                $('#pagination').html('')
+                            }
+                        },
+                        error: function() {
+                            alert('Có lỗi xảy ra khi lấy danh sách người dùng.');
+                        },
+                        complete: function() {
+                            hideLoading()
+                        }
+                    });
+                }
+
+                function showResult(users, page, totalPages, funcName, ref) {
+                    let tableHtml = '<table class="wp-list-table widefat fixed striped users" style="margin-top: 10px"><tr><th style="width: 30px">STT</th><th>Họ tên</th><th>Email</th><th>SĐT</th><th>Chứng chỉ</th><th>Ngày gửi</th><th>Trạng thái</th><th>Ngày cấp</th><th>Hoạt động</th><th>Hành động</th></tr>';
+                    users.forEach((user, index) => {
+                        const stt = (page - 1) * 5 + index + 1; // Calculate STT
+                        tableHtml += `<tr>
+                                        <td style="width: 30px">${stt}</td>
+                                        <td>${user.Name}</td>
+                                        <td>${user.Email}</td>
+                                        <td>${user.Phone}</td>
+                                        <td>${user.certificate_name}</td>
+                                        <td>${formatDate(user.submittedAt)}</td>
+                                        <td>
+                                            ${user.isCertified === "0" && user.certificate_status === "0" ? "Chưa cấp" :
+                                                user.isCertified === "0" && user.certificate_status === "1" ? "Đã hủy" :
+                                                user.isCertified === "1" && user.certificate_status === "0" ? "Đã cấp" :
+                                                "Không xác định"
+                                            }
+                                        </td>
+                                        <td>${user.createdAt ? formatDate(user.createdAt) : "-"}</td>
+                                        <td>${user.isDeleted === "0" ? "Đang hoạt động" : "Đã xóa"}</td>
+                                        <td>
+                                            ${user.isDeleted === "0" ? `
+                                                <select name="action" class="user-action" data-id="${user.CertificateId}" data-user_id="${user.Id}" data-user_name="${user.Name}">
+                                                    <option>Tùy chọn</option>
+                                                    <option value="delete">Xóa</option>
+                                                    ${user.isCertified === "0" && user.certificate_status === "0" ? `<option value="certification">Cấp chứng chỉ</option>` :
+                                                        user.isCertified === "0" && user.certificate_status === "1" ?  `<option value="restoreCertificate">Khôi phục chứng chỉ</option>` : 
+                                                        user.isCertified === "1" && user.certificate_status === "0" ?  `<option value="cancelCertificate">Hủy chứng chỉ</option>` : "Không xác định"}
+                                                </select>` : 
+                                                `<button id="restore" data-user_id="${user.Id}">Khôi phục</button>`
+                                            }
+                                        </td>
+                                    </tr>`;
+                    });
+
+                    tableHtml += '</table>';
+                    $('#result').html(tableHtml);
+                    
+                    $('#pagination').data('funcName', funcName);
+                    $('#pagination').data('ref', ref);
+                    $('#pagination').html('');
+                    for (var i = 1; i <= totalPages; i++) {
+                        var buttonClass = i === page ? 'page-btn active' : 'page-btn';
+                        $('#pagination').append('<button class="' + buttonClass + '" data-page="' + i + '">' + i + '</button> ');
+                    }
+                }
+
+                $('#pagination').on('click', '.page-btn', function() {
+                    $('#result').html('')
+                    let functionName = $('#pagination').data('funcName')
+                    let page = $(this).data('page')
+                    let ref = $('#pagination').data('ref')
+                    let func = listFunctions[functionName];
+
+                    if (typeof func === 'function') {
+                        func(ref, page); 
+                    } else {
+                        console.error('Hàm không tồn tại:', functionName);
+                    }
+                })
+            
+
+                //Tra cứu thông tin
+                $('#search').click(function() {
+                    const name = $('#txtUsername').val()
+                    if (!name) {
+                        alert('Vui lòng nhập tên người dùng!')
+                        return
+                    }
+                    getListUsersByName(name)
                 })
 
                 $('#filter').change(function() {
@@ -218,84 +407,15 @@ function my_custom_user_management_page_html() {
                     }
 
                     if (method === "dateSubmit" && date) {
-                        showLoading()
-                        $.ajax({
-                        url: ajaxurl,
-                        type: 'POST',
-                        data: {
-                            action: 'get_users_by_date_submit',
-                            date: date
-                        },
-                        success: function(response) {
-                            const users = response.data;
-                            if (users.length !== 0) {
-                                showResult(users)
-                            } else {
-                                $('#result').html('<p>Không có người dùng nộp yêu cầu trong ngày này.</p>');
-                            }
-
-                        },
-                        error: function() {
-                            alert('Có lỗi xảy ra khi lấy danh sách người dùng.');
-                        },
-                        complete: function() {
-                            hideLoading()
-                        }
-                        });
+                        getListUsersByDateSubmit(date)
                     }
 
                     if (method === "date" && date) {
-                        showLoading()
-                        $.ajax({
-                        url: ajaxurl,
-                        type: 'POST',
-                        data: {
-                            action: 'get_users_by_date',
-                            date: date
-                        },
-                        success: function(response) {
-                            const users = response.data;
-                            if (users.length !== 0) {
-                                showResult(users)
-                            } else {
-                                $('#result').html('<p>Không có người dùng được cấp chứng chỉ trong ngày này.</p>');
-                            }
-                            
-
-                        },
-                        error: function() {
-                            alert('Có lỗi xảy ra khi lấy danh sách người dùng.');
-                        },
-                        complete: function() {
-                            hideLoading()
-                        }
-                        });
+                        getListUsersByDateCertified(date)
                     }
 
                     if (method === "certificate" && certificateType) {
-                        showLoading()
-                        $.ajax({
-                        url: ajaxurl,
-                        type: 'POST',
-                        data: {
-                            action: 'get_users_by_certificate',
-                            idCertificate: certificateType
-                        },
-                        success: function(response) {
-                            const users = response.data;
-                            if (users.length !== 0) {
-                                showResult(users)
-                            } else {
-                                $('#result').html('<p>Không tồn tại người dùng với chứng chỉ này</p>');
-                            }
-                        },
-                        error: function() {
-                            alert('Có lỗi xảy ra khi lấy danh sách người dùng.');
-                        },
-                        complete: function() {
-                            hideLoading()
-                        }
-                        });
+                        getListUsersByCertificate(certificateType)
                     }
                 })
                 
@@ -355,8 +475,8 @@ function my_custom_user_management_page_html() {
                             url: ajaxurl, // URL cho yêu cầu AJAX, WordPress cung cấp ajaxurl sẵn
                             type: 'POST',
                             data: {
-                                action: 'cancel_certificate', // Tên của action PHP để xử lý yêu cầu
-                                id: currentUserId // ID Chứng chỉ
+                                action: 'cancel_certificate',
+                                id: currentUserId
                             },
                             success: function(response) {
                                 alert("Đã hủy chứng chỉ thành công.")
@@ -367,6 +487,24 @@ function my_custom_user_management_page_html() {
                             }
                         });
                         }
+                    }
+
+                    if (action === 'restoreCertificate') {
+                        $.ajax({
+                            url: ajaxurl,
+                            type: 'POST',
+                            data: {
+                                action: 'restore_certificate',
+                                id: currentUserId // ID Chứng chỉ
+                            },
+                            success: function(response) {
+                                alert("Đã khôi phục chứng chỉ thành công.")
+                                location.reload();
+                            },
+                            error: function() {
+                                alert('Có lỗi xảy ra khi khôi phục chứng chỉ.');
+                            }
+                        });
                     }
                 });
 
@@ -416,12 +554,14 @@ function my_custom_user_management_page_html() {
 
                 function showLoading() {
                     $('#result').hide()
+                    $('#pagination').hide()
                     $('#loading-container').show();
                 }
 
                 function hideLoading() {
                     $('#loading-container').hide();
                     $('#result').show()
+                    $('#pagination').show()
                 }
             });
 
@@ -447,6 +587,7 @@ add_action('wp_ajax_save_certificate', 'handle_save_certificate');
 add_action('wp_ajax_delete_user', 'handle_delete_user');
 add_action('wp_ajax_restore_user', 'handle_restore_user');
 add_action('wp_ajax_cancel_certificate', 'handle_cancel_certificate');
+add_action('wp_ajax_restore_certificate', 'handle_restore_certificate');
 //Tra cứu
 add_action('wp_ajax_get_users_by_name', 'handle_get_users_by_name');
 add_action('wp_ajax_get_users_by_certificate', 'handle_get_users_by_certificate');

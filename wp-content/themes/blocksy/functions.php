@@ -24,6 +24,7 @@ require_once get_template_directory() . "/custom_function/watchCertificated.php"
 require_once get_template_directory() . "/custom_function/deleteUser.php";
 require_once get_template_directory() . "/custom_function/restoreUser.php";
 require_once get_template_directory() . "/custom_function/cancelCertificate.php";
+require_once get_template_directory() . "/custom_function/restoreCertificate.php";
 require_once get_template_directory() . "/custom_function/importIdCertificated.php";
 require_once get_template_directory() . "/custom_function/deleteCertificate.php";
 require_once get_template_directory() . "/custom_function/updateCertificate.php";
